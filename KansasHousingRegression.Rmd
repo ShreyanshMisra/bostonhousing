@@ -1,6 +1,6 @@
 ---
 title: "Multiple Linear Regression on Boston Housing Dataset"
-author: "Shreyansh Misra, Luke Pasterczyk, Akhila Garre, Maxwell Owens, and Maithili Revankar"
+author: ""
 date: "`r Sys.Date()`"
 output:
   pdf_document:
@@ -14,6 +14,9 @@ library(caret)
 library(ggplot2)
 library(tidyr)
 library(dplyr)
+library(car)
+library(lmtest)
+library(nlme)
 ```
 
 # Introduction
@@ -117,9 +120,21 @@ model_significant <- train(medv ~ crim + zn + nox + rm + dis + rad + tax + ptrat
 
 print(model_significant$results)
 ```
+
 ```{r}
-summary(model_significant)
+train$predicted <- predict(model_significant, newdata = train)
+
+# Scatter plot with regression line
+ggplot(train, aes(x = medv, y = predicted)) +
+  geom_point(alpha = 0.6) +  # Scatter plot
+  geom_smooth(method = "lm", color = "blue", se = FALSE) +  # Best-fit line
+  labs(title = "Actual vs. Predicted MEDV",
+       x = "Actual MEDV",
+       y = "Predicted MEDV") +
+  theme_minimal()
 ```
+
+
 
 ## Assumptions of Multiple Linear Regression
 
@@ -128,15 +143,59 @@ summary(model_significant)
 3. Homoscedasticity - variance of the errors remains consistent across all values of the independent variable
 4. Normality Of Errors - errors are normally distributed
 
+### Assumption 1: Linearity
+
+To Verify Assumption 1, we use a scatter plot to determine the general trend of the data. 
+
+```{r}
+par(mfrow = c(2, 2))
+
+# Assumption 1
+plot(model_significant$finalModel$fitted.values, residuals(model_significant$finalModel),
+     main="Residuals vs Fitted Values",
+     xlab="Fitted Values", ylab="Residuals",
+     pch=20, col="blue")
+abline(h=0, col="red", lwd=2)
+
+# Assumption 2
+plot(residuals(model_significant$finalModel))
+abline(h=0, col = 'Red')
+
+# Assumption 4
+qqnorm(residuals(model_significant$finalModel), main="Normal Q-Q Plot")
+qqline(residuals(model_significant$finalModel), col="red")
+
+histogram(residuals(model_significant$finalModel), prob = TRUE)
+```
+This residual vs Fitted values graph displays a random pattern with a red line at 0, suggesting the linearity is valid
+
+For Assumption 2 we plot the residuals
+
+```{r}
+dwtest(model_significant$finalModel)
+```
+
+For assumption 3 we will look at the levene test
+
+```{r}
+train$FittedGroup <- ifelse(model_significant$finalModel$fitted.values < 
+                            median(model_significant$finalModel$fitted.values), 
+                            "Low", "High")
+
+# Apply Levene's Test correctly on training data
+leveneTest(residuals(model_significant$finalModel) ~ train$FittedGroup)
+
+```
+Since the p value is 0.2079 which is greater than 0.05, we fail to reject the null hypothesis which suggests the assumption of homscedasticity holds
+
+For assumption 4, we will create a QQ plot and a histogram of our residuals
 
 
+In regards to the QQ plot we want the residuals to follow the red line in which they do, furthermore in regards to the histogram we want it to form an approximate normal distribution which it also does. We can confirm our findings with a shapiro test:
 
-
-
-
-
-
-
+```{r}
+shapiro.test(residuals(model_significant$finalModel))
+```
 
 # Model Evaluation and Prediction
 
