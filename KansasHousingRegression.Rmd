@@ -1,5 +1,5 @@
 ---
-title: "Multiple Linear Regression on Boston Housing Dataset"
+title: "Multiple Linear Regression on Kansas House Prices Dataset"
 author: ""
 date: "`r Sys.Date()`"
 output:
