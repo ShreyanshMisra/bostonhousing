@@ -4,10 +4,10 @@ author: Shreyansh Misra, Maxwell Owens, Luke Pasterczyk, Akhila Garre, and Maith
   Revankar
 date: "`r Sys.Date()`"
 output:
-  pdf_document:
-    number_sections: true
   html_document:
     df_print: paged
+  pdf_document:
+    number_sections: true
 ---
 
 ```{r include=FALSE, messages=FALSE}
@@ -37,7 +37,7 @@ This study focuses on predicting home prices in King County, Washington using Mu
 
 Our investigation leveraged several R packages for data preprocessing, visualization, and modeling. `ggplot2` was used for data visualization, while `tidyr` and `dplyr` helped with data transformation. The `caret` package was used machine learning workflows, and `car`, `lmtest`, and `nlme` were used for regression and linearity testings.
 
-We find that the logarithmic function of 8 of these predictors are a very strong linear predictor of the logarithmic function of price, expressed by:
+We find that the logarithmic function of 5 of these predictors are a very strong linear predictor of the logarithmic function of price, expressed by:
 
 $$log(Y) = 6.3611 - 0.1871*log(\text{bedrooms}) - 0.1406*log(\text{bathrooms}) + 0.5216*log(\text{sqft_living}) - 0.0527*log(\text{sqft_lot})$$ 
 $$+0.3705*log(\text{waterfront}) + 0.1534*log(\text{view}) + 0.3691*log(\text{condition}) + 1.4207*log(\text{grade})$$
@@ -53,7 +53,7 @@ cat("Number of Rows: ", num_rows, "   Rows with Missing Data: ", sum_missingdata
 
 ## Dataset
 
-his dataset contains house sale prices for King County, which includes Seattle. 
+This dataset contains house sale prices for King County, which includes Seattle. 
 
 The dataset consists of house prices from King County an area in the US State of Washington, which also covers Seattle. It includes homes sold between May 2014 and May 2015. There are 10 variables and 21613 observations, of which 9 are features for the target house sales price. From an initial analysis, there were no missing data points. 
 
@@ -72,6 +72,7 @@ head(housing.df, 3)
 - waterfront: 	An index to indicate if the house was overlooking the waterfront or not. 0 represents no waterfront, 1 represents with waterfront.
 - view: 	An index from 0 to 4 of how good the view of the property was. 0 represents no good view, 4 represents very good view.
 - condition: 	An index from 1 to 5 on the condition of the house. 1 represents poorer condition, and 5 represents superb condition.
+- grade: An index from 1 to 13 on  quality level of construction and design.
 
 We can identify `price` as our dependent variable as the median value of homes in the neighborhood is what we are predicting. The remaining 9 variables are our independent variables.
 
@@ -86,11 +87,13 @@ ggplot(housing_box, aes(x = "", y = value)) +
   facet_wrap(~ variable, scales = "free_y") +
   theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
 ```
+
 There are evidently outliers in the dataset, and we will primarily concern ourselves with outliers in `price` as that is out dependent variable. 
 
 ```{r }
 boxplot(housing.df$price)
 ```
+
 Outlier detection and removal was performed utilizing the IQR method.
 
 ```{r }
@@ -139,14 +142,15 @@ print(model$results)
 ```{r }
 summary(model)
 ```
-All the variables except `floor` have p-values $>0.05$ making them signficiant predictors of `price`. As floor does not have a p-value $>0.05$ it can be removed from our final model as it does not influence the price of homes in Kings County to an extent that can deem it signigicant. The remaining 8 predictors were included in the final mode;=l.
+
+All the variables except `floor` have p-values $<0.05$ making them signficiant predictors of `price`. As floor does not have a p-value $>0.05$ it can be removed from our final model as it does not influence the price of homes in Kings County to an extent that can deem it signigicant. Furthermore, we drop view, waterfront, and condition since they are categorical variables. The remaining 5 predictors were included in the final model.
 
 ```{r}
-model <- train(price ~ bedrooms + bathrooms + sqft_living + sqft_lot + waterfront + view + condition + grade, method="lm", data = train, trControl=train_control)
+model <- train(price ~ bedrooms + bathrooms + sqft_living + sqft_lot + grade, method="lm", data = train, trControl=train_control)
 summary(model)
 ```
 
-We can further discuss the predictive abilities of this model after validating the assumptions of linearity for multiple linear regression (MLR). However, quickly analyzing the model reveals that it explains approximately 47.69% of the variance in the response variable, as indicated by the R-squared value of 0.4769. The formula for the fitted regression model is:
+We can further discuss the predictive abilities of this model after validating the assumptions of linearity for multiple linear regression (MLR). However, quickly analyzing the model reveals that it explains approximately 44.92% of the variance in the response variable, as indicated by the R-squared value of 0.4492. The formula for the fitted regression model is:
 
 $$log(Y) = 6.3611 - 0.1871*log(\text{bedrooms}) - 0.1406*log(\text{bathrooms}) + 0.5216*log(\text{sqft_living}) - 0.0527*log(\text{sqft_lot})$$ 
 $$+0.3705*log(\text{waterfront}) + 0.1534*log(\text{view}) + 0.3691*log(\text{condition}) + 1.4207*log(\text{grade})$$
@@ -185,7 +189,8 @@ dwtest(model$finalModel)
 ```{r }
 bptest(model$finalModel)
 ```
-The Breusch-Pagan test gave a BP value of 644.58 and a p-value < 2.2e-16, meaning we fail the test for homoscedasticity. This happens because housing prices naturally have more variation at higher values, which is normal for pricing data. Since we already applied a log transformation, this isn’t a big issue.
+
+The Breusch-Pagan test gave a BP value of 578.19 and a p-value < 2.2e-16, meaning we fail the test for homoscedasticity. This happens because housing prices naturally have more variation at higher values, which is normal for pricing data. Since we already applied a log transformation, this isn’t a big issue.
 
 ### Assumption 4: Normality Of Errors
 
@@ -195,6 +200,7 @@ qqline(residuals(model$finalModel), col='Red')
 histogram(residuals(model$finalModel), prob = TRUE)
 plot(model$finalModel, 3)
 ```
+
 The residuals closely follow the line in the Q-Q plot, indicating normality. The histogram also shows an approximately normal distribution. Finally, the Residuals vs. Fitted plot shows the residuals are evenly scattered around the red line, suggesting constant variance.
 
 ### Assumption 5  - Multicollinearity
@@ -223,15 +229,15 @@ rmse <- sqrt(mse) # RMSE
 cat("MAE: ", mae, "   MSE: ", mse, "   RMSE: ", rmse)
 ```
 
-In terms of model accuracy, we evaluated the residual statistics and key error metrics. These values indicate a reasonable predictive performance, though there is some variability in the residuals. The multiple R-squared value of 0.4769 suggests that approximately 47.7% of the variance in the outcome variable is explained by our predictors.
+In terms of model accuracy, we evaluated the residual statistics and key error metrics. These values indicate a reasonable predictive performance, though there is some variability in the residuals. The multiple R-squared value of 0.4492 suggests that approximately 44.9% of the variance in the outcome variable is explained by our predictors.
 
 For prediction, we applied the model to the training dataset and obtained reliable estimates. However, additional validation using a test dataset or cross-validation could help provide a better understanding of whether the model is generalizable.
 
 # Conclusion
 
-Our multiple linear regression model effectively predicts the outcome variable based on eight key predictors. The model passed linearity tests and demonstrated moderate explanatory power with an R-squared of 0.4769. The log transformation improved the linearity and distribution of residuals, ensuring a more accurate fit.
+Our multiple linear regression model effectively predicts the outcome variable based on eight key predictors. The model passed linearity tests and demonstrated moderate explanatory power with an R-squared of 0.4492. The log transformation improved the linearity and distribution of residuals, ensuring a more accurate fit.
 
-The model provided meaningful insights into how different factors influence the outcome variable. Key predictors such as `sqft_living`, `grade`, and `view` have significant positive impacts on price. However, the presence of heteroscedasticity suggests variability in residuals, which could impact predictive consistency. Furthermore, an R-squared of 0.4769 means over 50% of the variance remains unexplained.
+The model provided meaningful insights into how different factors influence the outcome variable. Key predictors such as `sqft_living` and `grade` have significant positive impacts on price. However, the presence of heteroscedasticity suggests variability in residuals, which could impact predictive consistency. Furthermore, an R-squared of 0.4492 means over 45% of the variance remains unexplained.
 
 Overall, while our model performs well within its scope, some future refinements can improve accuracy and generalizability.
 
