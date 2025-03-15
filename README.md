@@ -12,10 +12,7 @@ This study focuses on predicting home prices in King County, Washington using Mu
 
 Our investigation leveraged several R packages for data preprocessing, visualization, and modeling. `ggplot2` was used for data visualization, while `tidyr` and `dplyr` helped with data transformation. The `caret` package was used machine learning workflows, and `car`, `lmtest`, and `nlme` were used for regression and linearity testings.
 
-We find that the logarithmic function of 8 of these predictors are a very strong linear predictor of the logarithmic function of price, expressed by:
-
-$$ log(Y) = 6.3611 - 0.1871*log(\text{bedrooms}) - 0.1406*log(\text{bathrooms}) + 0.5216*log(\text{sqft_living}) - 0.0527*log(\text{sqft_lot})$$ 
-$$+0.3705*log(\text{waterfront}) + 0.1534*log(\text{view}) + 0.3691*log(\text{condition}) + 1.4207*log(\text{grade}) $$
+We find that the logarithmic function of 8 of these predictors are a very strong linear predictor of the logarithmic function of price.
 
 # Conclusion
 
