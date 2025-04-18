@@ -1,4 +1,4 @@
-# Multiplie Linear Regression on King County 
+# Multiplie Linear Regression on King County Housing Dataset
 
 Multiple Linear Regression (MLR) is a statistical method used to estimate the relationship between a dependent variable and multiple independent variables, assuming a linear relationship between them.
 
